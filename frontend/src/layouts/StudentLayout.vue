@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
+import { useNotificationStore } from '@/stores/notification'
 import {
   HomeFilled,
   School,
@@ -14,14 +15,15 @@ import {
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
+const notificationStore = useNotificationStore()
 
 const tabs = [
-  { path: '/student/home', label: '首页', icon: HomeFilled },
-  { path: '/student/rooms', label: '自习室', icon: School },
-  { path: '/student/reservations', label: '预约', icon: Calendar },
-  { path: '/student/recommend', label: '推荐', icon: Star },
-  { path: '/student/notifications', label: '消息', icon: ChatDotRound },
-  { path: '/student/profile', label: '我的', icon: User }
+  { path: '/student/home', label: '首页', icon: HomeFilled, key: 'home' },
+  { path: '/student/rooms', label: '自习室', icon: School, key: 'rooms' },
+  { path: '/student/reservations', label: '预约', icon: Calendar, key: 'reservations' },
+  { path: '/student/recommend', label: '推荐', icon: Star, key: 'recommend' },
+  { path: '/student/notifications', label: '消息', icon: ChatDotRound, key: 'notifications' },
+  { path: '/student/profile', label: '我的', icon: User, key: 'profile' }
 ]
 
 const title = computed(() => (route.meta.title as string) || '校园自习室')
@@ -31,6 +33,13 @@ function logout() {
   userStore.logout()
   router.replace('/auth/login')
 }
+
+onMounted(async () => {
+  if (userStore.isLoggedIn) {
+    await notificationStore.refreshUnread()
+    await notificationStore.ensureSubscribed()
+  }
+})
 </script>
 
 <template>
@@ -56,7 +65,15 @@ function logout() {
 
     <nav class="tabbar">
       <RouterLink v-for="t in tabs" :key="t.path" :to="t.path" class="tab" :class="{ active: activeTab === t.path }">
-        <el-icon :size="20"><component :is="t.icon" /></el-icon>
+        <el-badge
+          v-if="t.key === 'notifications'"
+          :value="notificationStore.unreadCount"
+          :hidden="notificationStore.unreadCount === 0"
+          :max="99"
+        >
+          <el-icon :size="20"><component :is="t.icon" /></el-icon>
+        </el-badge>
+        <el-icon v-else :size="20"><component :is="t.icon" /></el-icon>
         <span>{{ t.label }}</span>
       </RouterLink>
     </nav>

@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import request from '@/utils/request'
+import { ws } from '@/utils/ws'
 
 export type Role = 'STUDENT' | 'ADMIN'
 
@@ -51,6 +52,11 @@ export const useUserStore = defineStore('user', () => {
   function logout() {
     setToken('')
     user.value = null
+    try {
+      ws.disconnect()
+    } catch {
+      // ignore
+    }
   }
 
   return { token, user, isLoggedIn, isAdmin, setToken, fetchMe, tryRestore, logout }

@@ -18,7 +18,7 @@
 | 2 | 自习室与座位 + WebSocket 推送 | 🟢 完成（Agent B） |
 | 3 | 预约 + 签到 + 定时任务（超时释放） | ⚪ 未开始（Agent B） |
 | 4 | 智能推荐（规则打分） | ⚪ 未开始（Agent B） |
-| 5 | 违规举报 + 站内通知 | ⚪ 未开始（Agent A 通知 + Agent C 举报） |
+| 5 | 违规举报 + 站内通知 | 🟢 完成（A 通知 + C 举报） |
 | 6 | 巡检 + 公告 + 预约规则管理 | ⚪ 未开始（Agent C） |
 | 7 | 数据统计 + EasyExcel 导出 | ⚪ 未开始（Agent C） |
 | 8 | 操作日志（AOP 切面） | ⚪ 未开始（Agent C） |
@@ -53,6 +53,8 @@ a35093c 添加 MyBatis-Plus 分页 / Knife4j / WebSocket(STOMP) 配置
 - **Phase 1 通知骨架（notification 模块）**：`NotificationService`（写表 + 个人 WS 推送）、`WsPushService`（座位广播 + 个人通道）、`NotificationPayload`/`SeatPushPayload`；契约见 docs/AGENTS.md §3，B/C 可直接 `@Autowired` 引用
 - **Phase 2 房间座位（room 模块）**：`StudyRoomController`/`SeatController`（学生 GET）、`AdminStudyRoomController`/`AdminSeatController`（管理 CRUD + 批量建座 + 故障标记）、`RoomService`/`SeatService`/`SeatStatusService`（B own 的跨模块契约，refresh/markFault/clearFault），广播走 A 的 `WsPushService.publishSeat`
 - **Phase 2 前端**：`api/room.ts`（学生 + 管理两套接口封装）、`student/Rooms`（房间卡片 + 可用率配色 tag）、`student/SeatMap`（grid 平面图 + 订阅 `/topic/rooms/{id}/seats` 实时刷色 + 座位详情 Drawer，预约按钮预留 Phase 3 接入）、`admin/Rooms`（CRUD + 开关状态）、`admin/Seats`（按房间筛选 + 单建 / 批量 rows×cols 生成 + 编辑 / 删除 / 标记故障 / 解除故障 / 重算）
+- **Phase 5A 通知模块**：`NotificationController`（list/unread-count/markRead/markAllRead）；`WebSocketAuthConfig` 实现 STOMP CONNECT 帧 JWT 鉴权（Principal.name=userId），个人通道 `/user/queue/notifications` 正式可达；前端 `api/notification.ts`、`stores/notification.ts`（WS 订阅 + 未读计数 + ElNotification 浮窗）、`student/Notifications.vue`（分页列表 / 类型筛选 / 已读 / 全部已读 / 实时插入新通知）
+- **Phase 5A 用户管理**：`UserService` + `UserController`（更新自我资料 PUT /api/users/me / 修改密码）+ `AdminUserController`（分页查询 / 启用禁用 / 手动调信誉，调 C 的 `CreditService.changeCredit`）；前端 `api/user.ts`、`student/Profile.vue`（编辑资料 + 修改密码）、`admin/Users.vue`（列表 / 搜索 / 启停 / 调信誉对话框）；学生 layout 顶 tab 加未读徽章
 
 ### 已就绪的种子账号（默认密码均为 `123456`）
 
@@ -70,9 +72,9 @@ a35093c 添加 MyBatis-Plus 分页 / Knife4j / WebSocket(STOMP) 配置
 
 ## 当前能做什么
 
-后端**可以编译并跑通鉴权**（63 个源文件 `mvn -DskipTests compile` ✅，`AuthController` 已挂在 Knife4j），前端**可以启动并完成登录**（用 `stu01/123456` 登录后能拉到 `/api/auth/me`，token 持久化到 localStorage，刷新页面登录态不丢；管理员账号 `admin/123456` 登录后会被路由守卫送进 `/admin/dashboard`）。
+后端**可以编译并跑通鉴权、房间座位、举报、信誉、通知、用户管理**（102+ 源文件），前端**可以走完登录 → 浏览房间 → 看座位实时状态 → 收消息 → 编辑资料 → 改密码 → 管理端管用户**。
 
-业务页面仍是占位（房间、预约、举报、统计等待 Phase 2~9）。
+业务剩余主要是 Phase 3 预约/签到、Phase 4 推荐、Phase 6 巡检/公告/规则、Phase 7 统计、Phase 8 操作日志。
 
 ### 准备运行环境（一次性）
 ```bash
@@ -109,7 +111,7 @@ npm run dev            # → http://localhost:5173
 
 Phase 1 已完成，Phase 2 房间座位（前后端）已完成。跨模块的 `NotificationService` / `WsPushService` / `CreditService` 都已落地。后续按 [`docs/AGENTS.md`](./AGENTS.md) 分工继续推进：
 
-1. **Agent A**（地基组）：Phase 5 自己负责的部分（notification 模块完整化 + STOMP 鉴权 + student/Notifications 页 + admin/Users 页）+ Phase 9 收尾
+1. **Agent A**（地基组）：Phase 9 收尾（Knife4j 分组美化 + 根 README + docs/ER.md mermaid 图 + 端到端冒烟脚本）
 2. **Agent B**（核心业务组）：Phase 3 预约/签到（调 `NotificationService.send` + `CreditService.getScore/changeCredit`，所有依赖均已可用）；Phase 4 智能推荐
 3. **Agent C**（管理后台 + 数据组）：Phase 5 举报+信誉已完成；继续 Phase 6 巡检/公告/规则，Phase 7 数据统计，Phase 8 操作日志
 
@@ -133,5 +135,4 @@ Phase 1 已完成，Phase 2 房间座位（前后端）已完成。跨模块的 
 ## 已知遗留
 
 - 后端的 `application.yml` 默认密码 `123456`、JWT secret 是 placeholder——上线前需要替换。
-- WebSocket 还未接 STOMP 层鉴权：`WsPushService.publishToUser` 调 `convertAndSendToUser(userId, ...)`，但当前没有任何 STOMP `ChannelInterceptor` 把 token 解析成 principal，所以**个人通道消息暂不会真正送达**（DB 写入与广播 `/topic/...` 不受影响）。等 Agent A 做 Phase 5 完整通知模块时补一个 `WebSocketAuthInterceptor` 即可。
-- 后端业务接口除 Auth 外仍未实现，Knife4j 页面目前只有 "鉴权" 这一组。
+- Phase 9 待做：Knife4j 分组、根 README、ER 图、端到端冒烟。

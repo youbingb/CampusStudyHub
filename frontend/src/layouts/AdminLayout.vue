@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
+import { useNotificationStore } from '@/stores/notification'
 import {
   Monitor,
   School,
@@ -19,6 +20,7 @@ import {
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
+const notificationStore = useNotificationStore()
 
 const menu = [
   { path: '/admin/dashboard', label: '控制台', icon: Monitor },
@@ -40,6 +42,13 @@ function logout() {
   userStore.logout()
   router.replace('/auth/login')
 }
+
+onMounted(async () => {
+  if (userStore.isLoggedIn) {
+    await notificationStore.refreshUnread()
+    await notificationStore.ensureSubscribed()
+  }
+})
 </script>
 
 <template>

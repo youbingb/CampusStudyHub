@@ -174,3 +174,83 @@
 **功能**：手动触发座位状态重算（按当前 reservation 时段表）
 **鉴权**：ADMIN
 **响应**：`R<Void>`
+
+---
+
+## Phase 5 - 站内通知 + 用户管理（Agent A）
+
+### 通知类型枚举
+```
+RESERVATION_CREATED | RESERVATION_CANCELLED | RESERVATION_EXPIRED | RESERVATION_REMINDER
+REPORT_FILED | REPORT_RESOLVED | CREDIT_CHANGED | ANNOUNCEMENT | SYSTEM
+```
+
+### GET /api/notifications
+**功能**：当前用户的通知分页列表（按 createdAt 倒序）
+**鉴权**：登录用户
+**Query**：`NotificationQuery`
+- `page` *int, default 1*
+- `size` *int, default 20*
+- `readFlag` *0 未读 / 1 已读 / 省略=全部*
+- `type` *NotificationType, optional*
+
+**响应**：`R<PageResult<NotificationVo>>`，`NotificationVo { id, type, title, content, readFlag, relatedId, createdAt }`
+
+### GET /api/notifications/unread-count
+**功能**：当前用户的未读通知数量
+**鉴权**：登录用户
+**响应**：`R<Long>`
+
+### PUT /api/notifications/{id}/read
+**功能**：把单条通知标记为已读（只能操作自己的）
+**鉴权**：登录用户
+**响应**：`R<Void>`
+
+### PUT /api/notifications/read-all
+**功能**：把当前用户所有未读通知一次性标记为已读
+**鉴权**：登录用户
+**响应**：`R<Integer>` 实际更新条数
+
+---
+
+### PUT /api/users/me
+**功能**：更新当前用户的可编辑资料（realName / phone / email；null 表示不变，空串表示清空）
+**鉴权**：登录用户
+**请求**：`UpdateProfileReq { realName?, phone?, email? }`
+**响应**：`R<UserVo>` 更新后的资料
+
+### POST /api/users/me/password
+**功能**：当前用户修改密码（旧密码校验通过才更新）
+**鉴权**：登录用户
+**请求**：`ChangePasswordReq { oldPassword, newPassword(6-64) }`
+**响应**：`R<Void>`
+**错误码**：400 旧密码错误 / 参数校验失败
+
+---
+
+### GET /api/admin/users
+**功能**：管理端分页查询用户（keyword 模糊匹配 username/realName/studentNo/phone）
+**鉴权**：ADMIN
+**Query**：`UserQuery { page, size, keyword?, role?, status? }`
+**响应**：`R<PageResult<UserVo>>`
+
+### PUT /api/admin/users/{id}/status
+**功能**：启用或禁用账号
+**鉴权**：ADMIN
+**请求**：`UpdateStatusReq { status: 0 | 1 }`
+**响应**：`R<Void>`
+
+### POST /api/admin/users/{id}/credit
+**功能**：管理员手动调整用户信誉（委托 `CreditService.changeCredit`，会写 credit_log + 发 CREDIT_CHANGED 站内通知）
+**鉴权**：ADMIN
+**请求**：`AdjustCreditReq { delta: int(±), reason: string }`
+**响应**：`R<Integer>` 变更后的信誉分
+
+---
+
+## WS 鉴权（Agent A，Phase 5 落地）
+
+STOMP CONNECT 帧需在 native header 中带 `Authorization: Bearer <jwt>`。
+`WebSocketAuthConfig` 解析 JWT 后把 `sub`（用户 ID）设为会话 Principal.name，使
+`SimpMessagingTemplate.convertAndSendToUser(userId, "/queue/notifications", payload)` 能正确路由。
+前端 `utils/ws.ts` 已在 `connectHeaders` 里带 token；订阅 `/user/queue/notifications` 即可收到个人推送。
