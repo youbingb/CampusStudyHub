@@ -1,5 +1,6 @@
 package com.csh.modules.system.controller;
 
+import com.csh.aop.OperationLog;
 import com.csh.common.PageResult;
 import com.csh.common.R;
 import com.csh.modules.system.dto.AnnouncementQuery;
@@ -42,6 +43,7 @@ public class AdminAnnouncementController {
     }
 
     @Operation(summary = "新增公告（publishNow=true 立即发布，false 存为草稿）")
+    @OperationLog(module = "公告", action = "新增", targetIdSpEL = "#result?.data")
     @PostMapping
     public R<Long> create(@RequestBody @Valid CreateAnnouncementReq req) {
         Long uid = LoginUserHolder.requireCurrent().getId();
@@ -49,6 +51,7 @@ public class AdminAnnouncementController {
     }
 
     @Operation(summary = "更新公告标题/内容")
+    @OperationLog(module = "公告", action = "更新", targetIdSpEL = "#id")
     @PutMapping("/{id}")
     public R<Void> update(@PathVariable Long id, @RequestBody @Valid UpdateAnnouncementReq req) {
         announcementService.update(id, req);
@@ -56,6 +59,7 @@ public class AdminAnnouncementController {
     }
 
     @Operation(summary = "发布草稿")
+    @OperationLog(module = "公告", action = "发布", targetIdSpEL = "#id")
     @PostMapping("/{id}/publish")
     public R<Void> publish(@PathVariable Long id) {
         announcementService.publish(id);
@@ -63,6 +67,7 @@ public class AdminAnnouncementController {
     }
 
     @Operation(summary = "下架公告")
+    @OperationLog(module = "公告", action = "下架", targetIdSpEL = "#id")
     @PostMapping("/{id}/unpublish")
     public R<Void> unpublish(@PathVariable Long id) {
         announcementService.unpublish(id);
@@ -70,6 +75,7 @@ public class AdminAnnouncementController {
     }
 
     @Operation(summary = "删除公告")
+    @OperationLog(module = "公告", action = "删除", targetIdSpEL = "#id")
     @DeleteMapping("/{id}")
     public R<Void> delete(@PathVariable Long id) {
         announcementService.delete(id);

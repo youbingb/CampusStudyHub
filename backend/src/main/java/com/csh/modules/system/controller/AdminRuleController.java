@@ -1,5 +1,6 @@
 package com.csh.modules.system.controller;
 
+import com.csh.aop.OperationLog;
 import com.csh.common.R;
 import com.csh.modules.system.dto.RuleVo;
 import com.csh.modules.system.dto.UpdateRuleReq;
@@ -29,6 +30,7 @@ public class AdminRuleController {
     }
 
     @Operation(summary = "更新预约规则（字段可选，仅传入项被修改）")
+    @OperationLog(module = "预约规则", action = "更新")
     @PutMapping
     public R<RuleVo> update(@RequestBody @Valid UpdateRuleReq req) {
         return R.ok(ruleService.update(req));

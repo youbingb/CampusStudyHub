@@ -2,6 +2,7 @@ package com.csh.modules.report.controller;
 
 import com.csh.common.PageResult;
 import com.csh.common.R;
+import com.csh.aop.OperationLog;
 import com.csh.modules.report.dto.ProcessReportReq;
 import com.csh.modules.report.dto.ReportQuery;
 import com.csh.modules.report.dto.ReportVo;
@@ -39,6 +40,7 @@ public class AdminReportController {
     }
 
     @Operation(summary = "处理举报：核实通过或驳回")
+    @OperationLog(module = "举报", action = "处理", targetIdSpEL = "#id")
     @PostMapping("/{id}/process")
     public R<Void> process(@PathVariable Long id, @RequestBody @Valid ProcessReportReq req) {
         Long handlerId = LoginUserHolder.requireCurrent().getId();

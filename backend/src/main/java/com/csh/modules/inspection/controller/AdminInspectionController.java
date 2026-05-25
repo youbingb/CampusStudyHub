@@ -1,5 +1,6 @@
 package com.csh.modules.inspection.controller;
 
+import com.csh.aop.OperationLog;
 import com.csh.common.PageResult;
 import com.csh.common.R;
 import com.csh.modules.inspection.dto.CreateInspectionReq;
@@ -40,6 +41,7 @@ public class AdminInspectionController {
     }
 
     @Operation(summary = "新增巡检（issues 中的座位会被标记为 FAULT 并广播）")
+    @OperationLog(module = "巡检", action = "新增", targetIdSpEL = "#result?.data")
     @PostMapping
     public R<Long> create(@RequestBody @Valid CreateInspectionReq req) {
         Long uid = LoginUserHolder.requireCurrent().getId();
@@ -47,6 +49,7 @@ public class AdminInspectionController {
     }
 
     @Operation(summary = "删除巡检记录")
+    @OperationLog(module = "巡检", action = "删除", targetIdSpEL = "#id")
     @DeleteMapping("/{id}")
     public R<Void> delete(@PathVariable Long id) {
         inspectionService.delete(id);

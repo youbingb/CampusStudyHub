@@ -1,5 +1,6 @@
 package com.csh.modules.statistics.controller;
 
+import com.csh.aop.OperationLog;
 import com.csh.common.R;
 import com.csh.modules.statistics.dto.FaultVo;
 import com.csh.modules.statistics.dto.OccupancyVo;
@@ -57,6 +58,7 @@ public class AdminStatsController {
     }
 
     @Operation(summary = "导出 5 项统计（xlsx，多 Sheet）")
+    @OperationLog(module = "统计", action = "导出 Excel")
     @GetMapping("/export")
     public void export(StatsQuery query, HttpServletResponse response) {
         statisticsService.export(query, response);
