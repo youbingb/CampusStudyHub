@@ -3,6 +3,7 @@
 > 上次更新：2026-05-25
 > 当前分支：`main`
 > 推荐对照阅读的设计稿：`C:\Users\huanghancheng\.claude\plans\staged-skipping-lobster.md`（10 个 Phase 的总规划）
+> 多 agent 协作必读：[`docs/TECH_STACK.md`](./TECH_STACK.md)（依赖版本、模块边界、Controller/Service 模板、API 与 WS 约定）
 
 ---
 
@@ -103,11 +104,13 @@ mvn spring-boot:run
 ## 接续指引（新会话开场怎么继续）
 
 1. 读这份 `docs/PROGRESS.md`（你正在看的文件）。
-2. 读设计稿 `C:\Users\huanghancheng\.claude\plans\staged-skipping-lobster.md` 复习全局规划与数据库设计。
-3. `git log --oneline` 看具体已完成的 commit。
-4. 跟用户确认：是继续 Phase 0 收尾（前端脚手架），还是先去做某个特定 Phase。
-5. **每完成一个小功能 commit 一次**（项目偏好，参考 memory `feedback_commit_per_small_feature.md`）。
-6. **本阶段结束、准备暂停前必须回来更新这份 PROGRESS.md** 再停。
+2. **必读** `docs/TECH_STACK.md` —— 多 agent 协作的代码约定与模块边界。
+3. 读设计稿 `C:\Users\huanghancheng\.claude\plans\staged-skipping-lobster.md` 复习全局规划与数据库设计。
+4. `git log --oneline` 看具体已完成的 commit。
+5. 跟用户确认：是继续 Phase 0 收尾（前端脚手架），还是先去做某个特定 Phase / Module。
+6. **每完成一个小功能 commit 一次**（项目偏好，参考 memory `feedback_commit_per_small_feature.md`）。
+7. **本阶段结束、准备暂停前必须回来更新这份 PROGRESS.md** 再停。
+8. commit 之后**主动推到远端** `git push origin main`（用户要求代码必须上 GitHub）。
 
 ---
 
