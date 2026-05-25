@@ -1,5 +1,5 @@
 -- Campus Study Hub seed data
--- 默认密码 123456（BCrypt 后）：$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2
+-- 默认密码 123456（BCrypt 后）：$2a$10$VZA1j1GoNVXvH7lu/SzPfeXL3ajXYo1OfxJNY//61pCrNFoqIOw4a
 
 SET NAMES utf8mb4;
 
@@ -9,13 +9,13 @@ DELETE FROM seat;
 DELETE FROM reservation_rule;
 
 INSERT INTO sys_user (id, username, password, real_name, student_no, phone, email, role, credit_score, status) VALUES
-(1, 'admin',  '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', '系统管理员', NULL,        '13800000001', 'admin@csh.edu', 'ADMIN',   100, 1),
-(2, 'admin2', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', '巡检管理员', NULL,        '13800000002', 'admin2@csh.edu','ADMIN',   100, 1),
-(3, 'stu01',  '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', '张三',     '20230001',  '13900000001', 's01@csh.edu',   'STUDENT', 100, 1),
-(4, 'stu02',  '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', '李四',     '20230002',  '13900000002', 's02@csh.edu',   'STUDENT', 100, 1),
-(5, 'stu03',  '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', '王五',     '20230003',  '13900000003', 's03@csh.edu',   'STUDENT', 95,  1),
-(6, 'stu04',  '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', '赵六',     '20230004',  '13900000004', 's04@csh.edu',   'STUDENT', 100, 1),
-(7, 'stu05',  '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', '钱七',     '20230005',  '13900000005', 's05@csh.edu',   'STUDENT', 80,  1);
+(1, 'admin',  '$2a$10$VZA1j1GoNVXvH7lu/SzPfeXL3ajXYo1OfxJNY//61pCrNFoqIOw4a', '系统管理员', NULL,        '13800000001', 'admin@csh.edu', 'ADMIN',   100, 1),
+(2, 'admin2', '$2a$10$VZA1j1GoNVXvH7lu/SzPfeXL3ajXYo1OfxJNY//61pCrNFoqIOw4a', '巡检管理员', NULL,        '13800000002', 'admin2@csh.edu','ADMIN',   100, 1),
+(3, 'stu01',  '$2a$10$VZA1j1GoNVXvH7lu/SzPfeXL3ajXYo1OfxJNY//61pCrNFoqIOw4a', '张三',     '20230001',  '13900000001', 's01@csh.edu',   'STUDENT', 100, 1),
+(4, 'stu02',  '$2a$10$VZA1j1GoNVXvH7lu/SzPfeXL3ajXYo1OfxJNY//61pCrNFoqIOw4a', '李四',     '20230002',  '13900000002', 's02@csh.edu',   'STUDENT', 100, 1),
+(5, 'stu03',  '$2a$10$VZA1j1GoNVXvH7lu/SzPfeXL3ajXYo1OfxJNY//61pCrNFoqIOw4a', '王五',     '20230003',  '13900000003', 's03@csh.edu',   'STUDENT', 95,  1),
+(6, 'stu04',  '$2a$10$VZA1j1GoNVXvH7lu/SzPfeXL3ajXYo1OfxJNY//61pCrNFoqIOw4a', '赵六',     '20230004',  '13900000004', 's04@csh.edu',   'STUDENT', 100, 1),
+(7, 'stu05',  '$2a$10$VZA1j1GoNVXvH7lu/SzPfeXL3ajXYo1OfxJNY//61pCrNFoqIOw4a', '钱七',     '20230005',  '13900000005', 's05@csh.edu',   'STUDENT', 80,  1);
 
 INSERT INTO study_room (id, name, location, capacity, open_time, close_time, status, description) VALUES
 (1, 'A101 安静自习室', '图书馆 1 楼东侧', 30, '07:00', '22:30', 1, '禁止讨论，长时间深度自习首选'),
