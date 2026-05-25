@@ -9,13 +9,13 @@
 
 ## 总体状态
 
-**Phase 0（工程脚手架）已完成 —— 后端 + 前端 + 文档全部就绪。Phase 1 鉴权由 Agent A 完成，可进入下一阶段。**
+**Phase 0（工程脚手架）已完成 —— 后端 + 前端 + 文档全部就绪。Phase 1 鉴权由 Agent A 完成；Phase 2 房间/座位后端由 Agent B 完成。**
 
 | Phase | 内容 | 状态 |
 |---|---|---|
 | 0 | 后端工程脚手架 / 数据库 schema / 种子数据 / 前端 Vite 工程骨架 | 🟢 完成 |
 | 1 | JWT 鉴权（登录/注册/我的资料）+ 通知模块骨架 | 🟢 完成（Agent A） |
-| 2 | 自习室与座位 + WebSocket 推送 | ⚪ 未开始（Agent B） |
+| 2 | 自习室与座位 + WebSocket 推送 | 🟡 后端完成（Agent B），前端待做 |
 | 3 | 预约 + 签到 + 定时任务（超时释放） | ⚪ 未开始（Agent B） |
 | 4 | 智能推荐（规则打分） | ⚪ 未开始（Agent B） |
 | 5 | 违规举报 + 站内通知 | ⚪ 未开始（Agent A 通知 + Agent C 举报） |
@@ -51,6 +51,7 @@ a35093c 添加 MyBatis-Plus 分页 / Knife4j / WebSocket(STOMP) 配置
 - **实体 + Mapper**：12 张表全部就绪，使用 MP `BaseMapper` 内置方法
 - **Phase 1 鉴权（user 模块）**：`AuthController`（register/login/me/logout）、`AuthService`、`LoginReq`/`RegisterReq`/`LoginResp`/`UserVo`，BCrypt 校验密码，JWT 24h
 - **Phase 1 通知骨架（notification 模块）**：`NotificationService`（写表 + 个人 WS 推送）、`WsPushService`（座位广播 + 个人通道）、`NotificationPayload`/`SeatPushPayload`；契约见 docs/AGENTS.md §3，B/C 可直接 `@Autowired` 引用
+- **Phase 2 房间座位（room 模块）**：`StudyRoomController`/`SeatController`（学生 GET）、`AdminStudyRoomController`/`AdminSeatController`（管理 CRUD + 批量建座 + 故障标记）、`RoomService`/`SeatService`/`SeatStatusService`（B own 的跨模块契约，refresh/markFault/clearFault），广播走 A 的 `WsPushService.publishSeat`
 
 ### 已就绪的种子账号（默认密码均为 `123456`）
 
@@ -105,10 +106,10 @@ npm run dev            # → http://localhost:5173
 
 ## 下一步（按优先级）
 
-Phase 1 已完成，跨模块的 `NotificationService` 与 `WsPushService` 骨架也已落地（B/C 可直接 `@Autowired`）。后续按 [`docs/AGENTS.md`](./AGENTS.md) 分工继续推进：
+Phase 1 已完成，跨模块的 `NotificationService` 与 `WsPushService` 骨架也已落地（B/C 可直接 `@Autowired`）。Phase 2 后端已完成。后续按 [`docs/AGENTS.md`](./AGENTS.md) 分工继续推进：
 
 1. **Agent A**（地基组）：Phase 5 自己负责的部分（notification 模块完整化 + STOMP 鉴权 + student/Notifications 页 + admin/Users 页）+ Phase 9 收尾
-2. **Agent B**（核心业务组）：Phase 2 房间座位 + WebSocket（**直接调 `WsPushService.publishSeat`**），Phase 3 预约/签到（调 `NotificationService.send` + `CreditService.getScore/changeCredit`，CreditService 等 C 建），Phase 4 智能推荐
+2. **Agent B**（核心业务组）：Phase 2 前端（student/Rooms、SeatMap、admin/Rooms、admin/Seats）；Phase 3 预约/签到（调 `NotificationService.send` + `CreditService.getScore/changeCredit`，CreditService 等 C 建）；Phase 4 智能推荐
 3. **Agent C**（管理后台 + 数据组）：先建 `CreditService` 骨架，再做 Phase 5 举报+信誉，Phase 6 巡检/公告/规则，Phase 7 数据统计，Phase 8 操作日志
 
 每个 agent 接手只需把对应模块下"占位 view"的内容替换成真实页面（页面顶部都已注明谁负责）。
