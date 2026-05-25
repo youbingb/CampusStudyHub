@@ -3,7 +3,7 @@
 > 上次更新：2026-05-25
 > 当前分支：`main`
 > 推荐对照阅读的设计稿：`C:\Users\huanghancheng\.claude\plans\staged-skipping-lobster.md`（10 个 Phase 的总规划）
-> 多 agent 协作必读：[`docs/TECH_STACK.md`](./TECH_STACK.md)（依赖版本、模块边界、Controller/Service 模板、API 与 WS 约定）
+> 多 agent 协作必读：[`docs/TECH_STACK.md`](./TECH_STACK.md)（依赖版本、模块边界、Controller/Service 模板、API 与 WS 约定）+ [`docs/AGENTS.md`](./AGENTS.md)（3 agent 分工、跨模块 service 契约、kickoff 提示词）
 
 ---
 
