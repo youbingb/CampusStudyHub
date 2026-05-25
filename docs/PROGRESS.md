@@ -22,7 +22,7 @@
 | 6 | 巡检 + 公告 + 预约规则管理 | ⚪ 未开始（Agent C） |
 | 7 | 数据统计 + EasyExcel 导出 | ⚪ 未开始（Agent C） |
 | 8 | 操作日志（AOP 切面） | ⚪ 未开始（Agent C） |
-| 9 | 收尾：Knife4j 文档 + README + ER 图 | ⚪ 未开始（Agent A） |
+| 9 | 收尾：Knife4j 文档 + README + ER 图 | 🟢 完成（Agent A） |
 
 ---
 
@@ -55,6 +55,7 @@ a35093c 添加 MyBatis-Plus 分页 / Knife4j / WebSocket(STOMP) 配置
 - **Phase 2 前端**：`api/room.ts`（学生 + 管理两套接口封装）、`student/Rooms`（房间卡片 + 可用率配色 tag）、`student/SeatMap`（grid 平面图 + 订阅 `/topic/rooms/{id}/seats` 实时刷色 + 座位详情 Drawer，预约按钮预留 Phase 3 接入）、`admin/Rooms`（CRUD + 开关状态）、`admin/Seats`（按房间筛选 + 单建 / 批量 rows×cols 生成 + 编辑 / 删除 / 标记故障 / 解除故障 / 重算）
 - **Phase 5A 通知模块**：`NotificationController`（list/unread-count/markRead/markAllRead）；`WebSocketAuthConfig` 实现 STOMP CONNECT 帧 JWT 鉴权（Principal.name=userId），个人通道 `/user/queue/notifications` 正式可达；前端 `api/notification.ts`、`stores/notification.ts`（WS 订阅 + 未读计数 + ElNotification 浮窗）、`student/Notifications.vue`（分页列表 / 类型筛选 / 已读 / 全部已读 / 实时插入新通知）
 - **Phase 5A 用户管理**：`UserService` + `UserController`（更新自我资料 PUT /api/users/me / 修改密码）+ `AdminUserController`（分页查询 / 启用禁用 / 手动调信誉，调 C 的 `CreditService.changeCredit`）；前端 `api/user.ts`、`student/Profile.vue`（编辑资料 + 修改密码）、`admin/Users.vue`（列表 / 搜索 / 启停 / 调信誉对话框）；学生 layout 顶 tab 加未读徽章
+- **Phase 9 收尾**：`Knife4jGroupConfig` 把接口按 7 个业务组分组（/doc.html 顶部下拉切换）；根 `README.md` 写完整启动说明 + 截图坑位 + agent 分工总览；`docs/ER.md` 用 mermaid 画完整 12 表 ER 图 + 索引表 + 软删表 + 状态枚举速查
 
 ### 已就绪的种子账号（默认密码均为 `123456`）
 
@@ -111,7 +112,7 @@ npm run dev            # → http://localhost:5173
 
 Phase 1 已完成，Phase 2 房间座位（前后端）已完成。跨模块的 `NotificationService` / `WsPushService` / `CreditService` 都已落地。后续按 [`docs/AGENTS.md`](./AGENTS.md) 分工继续推进：
 
-1. **Agent A**（地基组）：Phase 9 收尾（Knife4j 分组美化 + 根 README + docs/ER.md mermaid 图 + 端到端冒烟脚本）
+1. **Agent A**（地基组）：✅ 全部完成（Phase 0/1/5A/9）
 2. **Agent B**（核心业务组）：Phase 3 预约/签到（调 `NotificationService.send` + `CreditService.getScore/changeCredit`，所有依赖均已可用）；Phase 4 智能推荐
 3. **Agent C**（管理后台 + 数据组）：Phase 5 举报+信誉已完成；继续 Phase 6 巡检/公告/规则，Phase 7 数据统计，Phase 8 操作日志
 
@@ -135,4 +136,3 @@ Phase 1 已完成，Phase 2 房间座位（前后端）已完成。跨模块的 
 ## 已知遗留
 
 - 后端的 `application.yml` 默认密码 `123456`、JWT secret 是 placeholder——上线前需要替换。
-- Phase 9 待做：Knife4j 分组、根 README、ER 图、端到端冒烟。
