@@ -16,7 +16,7 @@
 | 0 | 后端工程脚手架 / 数据库 schema / 种子数据 / 前端 Vite 工程骨架 | 🟢 完成 |
 | 1 | JWT 鉴权（登录/注册/我的资料）+ 通知模块骨架 | 🟢 完成（Agent A） |
 | 2 | 自习室与座位 + WebSocket 推送 | 🟢 完成（Agent B） |
-| 3 | 预约 + 签到 + 定时任务（超时释放） | ⚪ 未开始（Agent B） |
+| 3 | 预约 + 签到 + 定时任务（超时释放） | 🟡 后端完成（Agent B），前端待做 |
 | 4 | 智能推荐（规则打分） | ⚪ 未开始（Agent B） |
 | 5 | 违规举报 + 站内通知 | 🟢 完成（A 通知 + C 举报） |
 | 6 | 巡检 + 公告 + 预约规则管理 | ⚪ 未开始（Agent C） |
@@ -56,6 +56,7 @@ a35093c 添加 MyBatis-Plus 分页 / Knife4j / WebSocket(STOMP) 配置
 - **Phase 5A 通知模块**：`NotificationController`（list/unread-count/markRead/markAllRead）；`WebSocketAuthConfig` 实现 STOMP CONNECT 帧 JWT 鉴权（Principal.name=userId），个人通道 `/user/queue/notifications` 正式可达；前端 `api/notification.ts`、`stores/notification.ts`（WS 订阅 + 未读计数 + ElNotification 浮窗）、`student/Notifications.vue`（分页列表 / 类型筛选 / 已读 / 全部已读 / 实时插入新通知）
 - **Phase 5A 用户管理**：`UserService` + `UserController`（更新自我资料 PUT /api/users/me / 修改密码）+ `AdminUserController`（分页查询 / 启用禁用 / 手动调信誉，调 C 的 `CreditService.changeCredit`）；前端 `api/user.ts`、`student/Profile.vue`（编辑资料 + 修改密码）、`admin/Users.vue`（列表 / 搜索 / 启停 / 调信誉对话框）；学生 layout 顶 tab 加未读徽章
 - **Phase 9 收尾**：`Knife4jGroupConfig` 把接口按 7 个业务组分组（/doc.html 顶部下拉切换）；根 `README.md` 写完整启动说明 + 截图坑位 + agent 分工总览；`docs/ER.md` 用 mermaid 画完整 12 表 ER 图 + 索引表 + 软删表 + 状态枚举速查
+- **Phase 3 预约/签到后端（reservation 模块）**：`ReservationController`（学生创建/查询/取消/签到/签退）、`AdminReservationController`（管理端分页/详情/强制取消）、`ReservationService`（信誉门槛 + 时段冲突 + 每日上限 + 最长时长 + 最早签到时间校验，状态变更同步调 `SeatStatusService.refresh` 与 `NotificationService.send`）、`scheduler/ReservationScheduler`（每 30s 跑超时未签到 → EXPIRED + 扣 `no_show_credit_penalty` + 通知；已签到到期 → COMPLETED）
 
 ### 已就绪的种子账号（默认密码均为 `123456`）
 

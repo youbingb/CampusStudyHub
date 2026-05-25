@@ -177,6 +177,80 @@
 
 ---
 
+## Phase 3 - 预约与签到（Agent B）
+
+> 状态枚举 `ReservationStatus = BOOKED | CHECKED_IN | COMPLETED | CANCELLED | EXPIRED`。
+> 学生路径 `/api/reservations`；管理路径 `/api/admin/reservations`。
+> 校验规则取自 `reservation_rule` 表（max_daily / max_advance_days / min_credit / max_duration_hours / check_in_grace_min / no_show_credit_penalty）。
+
+### POST /api/reservations
+**功能**：学生创建预约
+**鉴权**：登录用户
+**请求**：`CreateReservationReq`
+- `seatId` *long, required*
+- `startTime` *datetime, required*
+- `endTime` *datetime, required*
+
+**响应**：`R<Long>` 新预约 id
+**错误码**：4000 参数非法 / 座位故障 / 4001 时段冲突 / 4002 信誉不足 / 4003 超过每日上限 / 4004 超过最长时长/提前天数
+
+### GET /api/reservations/mine?status=&page=&size=
+**功能**：当前用户的预约分页（按 startTime 倒序）
+**鉴权**：登录用户
+**响应**：`R<PageResult<ReservationVo>>`，`ReservationVo { id, userId, username, userRealName, seatId, seatNo, roomId, roomName, startTime, endTime, status, checkInTime, checkOutTime, createdAt }`
+
+### GET /api/reservations/{id}
+**功能**：预约详情
+**鉴权**：登录用户
+**响应**：`R<ReservationVo>`
+
+### POST /api/reservations/{id}/cancel
+**功能**：取消自己的预约（仅 BOOKED 状态可取消）
+**鉴权**：登录用户
+**响应**：`R<Void>`
+
+### POST /api/reservations/{id}/check-in
+**功能**：到点签到（窗口：`startTime - grace_min ≤ now ≤ endTime`；状态需为 BOOKED）
+**鉴权**：登录用户
+**响应**：`R<Void>`
+
+### POST /api/reservations/{id}/check-out
+**功能**：签退（CHECKED_IN → COMPLETED）
+**鉴权**：登录用户
+**响应**：`R<Void>`
+
+---
+
+### GET /api/admin/reservations
+**功能**：管理端分页查询预约
+**鉴权**：ADMIN
+**Query**：`ReservationQuery { page, size, status?, userId?, seatId?, roomId?, startFrom?, startTo? }`
+**响应**：`R<PageResult<ReservationVo>>`
+
+### GET /api/admin/reservations/{id}
+**功能**：预约详情（管理端）
+**鉴权**：ADMIN
+**响应**：`R<ReservationVo>`
+
+### POST /api/admin/reservations/{id}/cancel
+**功能**：管理员强制取消预约（同时给用户发 RESERVATION_CANCELLED 通知）
+**鉴权**：ADMIN
+**请求**：`CancelReservationReq { reason }`
+**响应**：`R<Void>`
+
+---
+
+## 后台定时任务（Agent B）
+
+| 任务 | 频率 | 作用 |
+|---|---|---|
+| `ReservationScheduler#handleExpired` | 每 30 s | 把 `startTime + grace_min < now` 仍为 BOOKED 的预约置为 EXPIRED，扣信誉 `no_show_credit_penalty`，发 RESERVATION_EXPIRED 通知 |
+| `ReservationScheduler#handleAutoComplete` | 每 30 s | 把 `endTime < now` 仍为 CHECKED_IN 的预约置为 COMPLETED，`checkOutTime = endTime` |
+
+两个任务均会调 `SeatStatusService.refresh(seatId)` 刷新座位并广播 `/topic/rooms/{roomId}/seats`。
+
+---
+
 ## Phase 5 - 站内通知 + 用户管理（Agent A）
 
 ### 通知类型枚举
