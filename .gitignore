@@ -35,3 +35,6 @@ desktop.ini
 *.swp
 *.bak
 *.tmp
+
+# Playwright MCP snapshots
+.playwright-mcp/
