@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.csh.modules.statistics.mapper.StatisticsMapper">
+
+    <!-- 上座率：按 room 聚合预约数、已签到数、座位使用小时 -->
+    <select id="selectOccupancy" resultType="com.csh.modules.statistics.dto.OccupancyVo">
+        SELECT
+            r.id        AS roomId,
+            r.name      AS roomName,
+            r.capacity  AS capacity,
+            COUNT(rsv.id) AS totalReservations,
+            COALESCE(SUM(
+                CASE WHEN rsv.status IN ('CHECKED_IN','COMPLETED') THEN 1 ELSE 0 END
+            ), 0) AS completedReservations,
+            COALESCE(SUM(
+                CASE WHEN rsv.status IN ('CHECKED_IN','COMPLETED')
+                     THEN TIMESTAMPDIFF(MINUTE, rsv.start_time, rsv.end_time)
+                     ELSE 0 END
+            ) / 60.0, 0) AS totalSeatHours
+        FROM study_room r
+        LEFT JOIN reservation rsv
+            ON rsv.room_id = r.id
+            AND rsv.deleted = 0
+            <if test="from != null"> AND rsv.start_time &gt;= #{from} </if>
+            <if test="to != null"> AND rsv.start_time &lt; #{to} </if>
+        WHERE r.deleted = 0
+        GROUP BY r.id, r.name, r.capacity
+        ORDER BY totalReservations DESC, r.id ASC
+    </select>
+
+    <!-- 用户使用情况 Top N：按预约总数排序 -->
+    <select id="selectUsage" resultType="com.csh.modules.statistics.dto.UsageVo">
+        SELECT
+            u.id          AS userId,
+            u.username    AS username,
+            u.real_name   AS realName,
+            u.student_no  AS studentNo,
+            COUNT(rsv.id) AS reservationCount,
+            COALESCE(SUM(CASE WHEN rsv.status = 'COMPLETED'  THEN 1 ELSE 0 END), 0) AS completedCount,
+            COALESCE(SUM(CASE WHEN rsv.status = 'EXPIRED'    THEN 1 ELSE 0 END), 0) AS noShowCount,
+            COALESCE(SUM(
+                CASE WHEN rsv.status IN ('CHECKED_IN','COMPLETED')
+                     THEN TIMESTAMPDIFF(MINUTE, rsv.start_time, rsv.end_time)
+                     ELSE 0 END
+            ) / 60.0, 0) AS totalHours
+        FROM sys_user u
+        INNER JOIN reservation rsv
+            ON rsv.user_id = u.id
+            AND rsv.deleted = 0
+            <if test="from != null"> AND rsv.start_time &gt;= #{from} </if>
+            <if test="to != null"> AND rsv.start_time &lt; #{to} </if>
+        WHERE u.deleted = 0 AND u.role = 'STUDENT'
+        GROUP BY u.id, u.username, u.real_name, u.student_no
+        ORDER BY reservationCount DESC, u.id ASC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 热门时段：start_time 的小时分布 -->
+    <select id="selectPopularHours" resultType="com.csh.modules.statistics.dto.PopularHourVo">
+        SELECT
+            HOUR(rsv.start_time) AS hour,
+            COUNT(rsv.id)        AS reservationCount
+        FROM reservation rsv
+        WHERE rsv.deleted = 0
+            <if test="from != null"> AND rsv.start_time &gt;= #{from} </if>
+            <if test="to != null"> AND rsv.start_time &lt; #{to} </if>
+        GROUP BY HOUR(rsv.start_time)
+        ORDER BY hour ASC
+    </select>
+
+    <!-- 违规扣分 Top N：聚合 credit_log 中 delta &lt; 0 的记录 -->
+    <select id="selectViolations" resultType="com.csh.modules.statistics.dto.ViolationVo">
+        SELECT
+            u.id           AS userId,
+            u.username     AS username,
+            u.real_name    AS realName,
+            u.student_no   AS studentNo,
+            u.credit_score AS creditScore,
+            COUNT(cl.id)   AS violationCount,
+            COALESCE(-SUM(cl.delta), 0) AS totalDeduction
+        FROM sys_user u
+        INNER JOIN credit_log cl
+            ON cl.user_id = u.id
+           AND cl.delta &lt; 0
+        WHERE u.deleted = 0
+        GROUP BY u.id, u.username, u.real_name, u.student_no, u.credit_score
+        ORDER BY totalDeduction DESC, violationCount DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 自习室故障统计 -->
+    <select id="selectFaults" resultType="com.csh.modules.statistics.dto.FaultVo">
+        SELECT
+            r.id                    AS roomId,
+            r.name                  AS roomName,
+            COUNT(sf.id)            AS totalFaults,
+            COALESCE(SUM(CASE WHEN sf.status = 'OPEN' THEN 1 ELSE 0 END), 0) AS openFaults,
+            MAX(sf.created_at)      AS latestFaultAt
+        FROM study_room r
+        LEFT JOIN seat s ON s.room_id = r.id AND s.deleted = 0
+        LEFT JOIN seat_fault sf
+            ON sf.seat_id = s.id
+            <if test="from != null"> AND sf.created_at &gt;= #{from} </if>
+            <if test="to != null"> AND sf.created_at &lt; #{to} </if>
+        WHERE r.deleted = 0
+        GROUP BY r.id, r.name
+        ORDER BY totalFaults DESC, r.id ASC
+    </select>
+
+</mapper>
