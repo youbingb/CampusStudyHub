@@ -37,7 +37,7 @@ function logout() {
   <div class="student-layout">
     <header class="topbar">
       <span class="title">{{ title }}</span>
-      <el-dropdown v-if="userStore.user" @command="(c) => c === 'logout' && logout()">
+      <el-dropdown v-if="userStore.user" @command="(c: string) => c === 'logout' && logout()">
         <span class="user">
           {{ userStore.user.realName || userStore.user.username }}
           <el-tag size="small" type="info">信誉 {{ userStore.user.creditScore }}</el-tag>

@@ -1,0 +1,4 @@
+- generic [ref=e3]:
+  - heading "404 页面不存在" [level=2] [ref=e4]
+  - link "返回首页" [ref=e6] [cursor=pointer]:
+    - /url: /

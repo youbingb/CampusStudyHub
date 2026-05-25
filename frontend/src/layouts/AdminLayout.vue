@@ -64,7 +64,7 @@ function logout() {
     <el-container>
       <el-header class="topbar">
         <span class="title">{{ (route.meta.title as string) || '管理后台' }}</span>
-        <el-dropdown v-if="userStore.user" @command="(c) => c === 'logout' && logout()">
+        <el-dropdown v-if="userStore.user" @command="(c: string) => c === 'logout' && logout()">
           <span class="user">{{ userStore.user.realName || userStore.user.username }}</span>
           <template #dropdown>
             <el-dropdown-menu>

@@ -9,20 +9,20 @@
 
 ## 总体状态
 
-**Phase 0（工程脚手架）进行中 —— 后端骨架已完成并通过编译，前端骨架尚未开始。**
+**Phase 0（工程脚手架）已完成 —— 后端 + 前端 + 文档全部就绪，可以分发给 3 个 agent 并行。**
 
 | Phase | 内容 | 状态 |
 |---|---|---|
-| 0 | 后端工程脚手架 / 数据库 schema / 种子数据 | 🟢 后端部分完成（待 frontend 部分） |
-| 1 | JWT 鉴权（登录/注册/我的资料） | ⚪ 未开始 |
-| 2 | 自习室与座位 + WebSocket 推送 | ⚪ 未开始 |
-| 3 | 预约 + 签到 + 定时任务（超时释放） | ⚪ 未开始 |
-| 4 | 智能推荐（规则打分） | ⚪ 未开始 |
-| 5 | 违规举报 + 站内通知 | ⚪ 未开始 |
-| 6 | 巡检 + 公告 + 预约规则管理 | ⚪ 未开始 |
-| 7 | 数据统计 + EasyExcel 导出 | ⚪ 未开始 |
-| 8 | 操作日志（AOP 切面） | ⚪ 未开始 |
-| 9 | 收尾：Knife4j 文档 + README + ER 图 | ⚪ 未开始 |
+| 0 | 后端工程脚手架 / 数据库 schema / 种子数据 / 前端 Vite 工程骨架 | 🟢 完成 |
+| 1 | JWT 鉴权（登录/注册/我的资料） | ⚪ 未开始（Agent A） |
+| 2 | 自习室与座位 + WebSocket 推送 | ⚪ 未开始（Agent B） |
+| 3 | 预约 + 签到 + 定时任务（超时释放） | ⚪ 未开始（Agent B） |
+| 4 | 智能推荐（规则打分） | ⚪ 未开始（Agent B） |
+| 5 | 违规举报 + 站内通知 | ⚪ 未开始（Agent A 通知 + Agent C 举报） |
+| 6 | 巡检 + 公告 + 预约规则管理 | ⚪ 未开始（Agent C） |
+| 7 | 数据统计 + EasyExcel 导出 | ⚪ 未开始（Agent C） |
+| 8 | 操作日志（AOP 切面） | ⚪ 未开始（Agent C） |
+| 9 | 收尾：Knife4j 文档 + README + ER 图 | ⚪ 未开始（Agent A） |
 
 ---
 
@@ -65,7 +65,7 @@ a35093c 添加 MyBatis-Plus 分页 / Knife4j / WebSocket(STOMP) 配置
 
 ## 当前能做什么
 
-后端**可以编译**（`mvn -DskipTests compile` ✅），但还**不能启动业务流程**——因为还没有任何 `@RestController`。
+后端**可以编译**（`mvn -DskipTests compile` ✅），前端**可以启动**（`npm install && npm run dev` ✅，全部 23 个路由能渲染占位页 + 登录页可输入），但还**不能跑通业务**——因为还没有任何业务 `@RestController`。
 
 ### 准备运行环境（一次性）
 ```bash
@@ -85,19 +85,28 @@ mvn spring-boot:run
 # http://localhost:8080/doc.html （Knife4j；目前接口为空）
 ```
 
+### 跑前端
+```bash
+cd frontend
+npm install            # 首次
+npm run dev            # → http://localhost:5173
+```
+
+打开 `http://localhost:5173/auth/login` 能看到登录页；`/admin/dashboard` 等需要登录的路由会自动跳回登录页（路由守卫已生效）。
+
 > **MySQL 密码不是 `123456`？** 改 `backend/src/main/resources/application.yml` 里的 `spring.datasource.password`。
 
 ---
 
 ## 下一步（按优先级）
 
-1. **完成 Phase 0 剩余部分**：前端 Vite + Vue 3 + TS + Pinia + Element Plus 工程骨架 + 双 layout 空壳 + 路由守卫占位 + axios 封装。验证标准：`/student` 与 `/admin` 两条路由各能加载占位页。
-2. **Phase 1（鉴权）**：
-   - 后端：`AuthController` (注册/登录/getMe)、`AuthService`、登录 DTO
-   - 前端：登录页、注册页、Pinia user store、路由守卫挂上 token
-   - 验证：用 `stu01 / 123456` 在前端完成登录并刷新页不掉登录态
-3. **Phase 2（房间座位 + WS）**：见设计稿
-4. ... 依次往后
+Phase 0 已经收尾，**全部前置就绪**，可以按 [`docs/AGENTS.md`](./AGENTS.md) 分工把任务分给 3 个 agent：
+
+1. **Agent A**（地基组）：Phase 1 鉴权（`/api/auth/login` 一旦实现，前端登录页 Login.vue 立刻可用，不需要改动前端）+ Phase 5 通知模块 + Phase 9 收尾
+2. **Agent B**（核心业务组）：Phase 2 房间座位 + WebSocket，Phase 3 预约/签到，Phase 4 智能推荐
+3. **Agent C**（管理后台 + 数据组）：Phase 5 举报+信誉，Phase 6 巡检/公告/规则，Phase 7 数据统计，Phase 8 操作日志
+
+每个 agent 接手只需把对应模块下"占位 view"的内容替换成真实页面（页面顶部都已注明谁负责）。
 
 ---
 
@@ -117,5 +126,5 @@ mvn spring-boot:run
 ## 已知遗留
 
 - 后端的 `application.yml` 默认密码 `123456`、JWT secret 是 placeholder——上线前需要替换。
-- 还没有任何业务 Controller，所以 Knife4j 页面会是空白的，仅作为 "服务能起" 的探针。
-- 前端目录还没动过，连 `package.json` 都没有。
+- 后端还没有任何业务 Controller，所以 Knife4j 页面是空白的，仅作为 "服务能起" 的探针。
+- 前端登录页调 `/api/auth/login` 当前会 404，等 Agent A Phase 1 实现后自动通；前端代码不需要改。
