@@ -3,6 +3,7 @@ import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { roomApi, type RoomVo, type SeatVo, type SeatStatus } from '@/api/room'
+import { reservationApi } from '@/api/reservation'
 import { ws } from '@/utils/ws'
 import { useWsStore } from '@/stores/ws'
 
@@ -17,6 +18,12 @@ const loading = ref(false)
 const selectedSeat = ref<SeatVo | null>(null)
 const drawerVisible = ref(false)
 
+const reserveForm = ref<{ startTime: string; endTime: string }>({
+  startTime: defaultStart(),
+  endTime: defaultEnd()
+})
+const submitting = ref(false)
+
 let unsubscribe: (() => void) | null = null
 
 const cols = computed(() => {
@@ -29,7 +36,6 @@ const rows = computed(() => {
 })
 
 const seatGrid = computed(() => {
-  // 转为 grid[row][col] 方便渲染
   const map = new Map<string, SeatVo>()
   for (const s of seats.value) {
     map.set(`${s.rowNo}-${s.colNo}`, s)
@@ -50,6 +56,19 @@ const stats = computed(() => {
   for (const s of seats.value) acc[s.status]++
   return acc
 })
+
+function defaultStart(): string {
+  const d = new Date(Date.now() + 5 * 60 * 1000)
+  return toLocalIso(d)
+}
+function defaultEnd(): string {
+  const d = new Date(Date.now() + 2 * 60 * 60 * 1000)
+  return toLocalIso(d)
+}
+function toLocalIso(d: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:00`
+}
 
 async function loadAll() {
   loading.value = true
@@ -89,6 +108,8 @@ async function subscribeSeats() {
 function openSeat(s: SeatVo | null) {
   if (!s) return
   selectedSeat.value = s
+  reserveForm.value.startTime = defaultStart()
+  reserveForm.value.endTime = defaultEnd()
   drawerVisible.value = true
 }
 
@@ -96,10 +117,31 @@ function statusLabel(s: SeatStatus): string {
   return { AVAILABLE: '空闲', RESERVED: '已预约', OCCUPIED: '使用中', FAULT: '故障' }[s]
 }
 
-function reserveSeat() {
+async function submitReserve() {
   if (!selectedSeat.value) return
-  // Phase 3 由 Agent B 实现：把当前座位 ID 带去预约页 / 弹预约 Drawer
-  ElMessage.info('预约入口将由 Phase 3 接入')
+  if (!reserveForm.value.startTime || !reserveForm.value.endTime) {
+    ElMessage.warning('请选择开始和结束时间')
+    return
+  }
+  if (reserveForm.value.endTime <= reserveForm.value.startTime) {
+    ElMessage.warning('结束时间必须晚于开始时间')
+    return
+  }
+  submitting.value = true
+  try {
+    await reservationApi.create({
+      seatId: selectedSeat.value.id,
+      startTime: reserveForm.value.startTime,
+      endTime: reserveForm.value.endTime
+    })
+    ElMessage.success('预约成功')
+    drawerVisible.value = false
+    router.push('/student/reservations')
+  } catch {
+    // 拦截器已 toast
+  } finally {
+    submitting.value = false
+  }
 }
 
 onMounted(async () => {
@@ -151,7 +193,7 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <el-drawer v-model="drawerVisible" :title="selectedSeat?.seatNo" direction="btt" size="40%">
+    <el-drawer v-model="drawerVisible" :title="selectedSeat?.seatNo" direction="btt" size="56%">
       <template v-if="selectedSeat">
         <el-descriptions :column="1" border>
           <el-descriptions-item label="座位编号">{{ selectedSeat.seatNo }}</el-descriptions-item>
@@ -165,13 +207,40 @@ onUnmounted(() => {
           </el-descriptions-item>
           <el-descriptions-item v-if="selectedSeat.feature" label="特性">{{ selectedSeat.feature }}</el-descriptions-item>
         </el-descriptions>
+
+        <el-divider />
+        <el-form label-width="80px" :disabled="selectedSeat.status !== 'AVAILABLE'">
+          <el-form-item label="开始时间">
+            <el-date-picker
+              v-model="reserveForm.startTime"
+              type="datetime"
+              value-format="YYYY-MM-DD HH:mm:ss"
+              format="YYYY-MM-DD HH:mm"
+              style="width: 100%"
+            />
+          </el-form-item>
+          <el-form-item label="结束时间">
+            <el-date-picker
+              v-model="reserveForm.endTime"
+              type="datetime"
+              value-format="YYYY-MM-DD HH:mm:ss"
+              format="YYYY-MM-DD HH:mm"
+              style="width: 100%"
+            />
+          </el-form-item>
+          <el-alert v-if="selectedSeat.status !== 'AVAILABLE'" type="info" :closable="false" show-icon>
+            该座位当前不可预约
+          </el-alert>
+        </el-form>
+
         <div class="drawer-footer">
           <el-button
             type="primary"
+            :loading="submitting"
             :disabled="selectedSeat.status !== 'AVAILABLE'"
-            @click="reserveSeat"
+            @click="submitReserve"
           >
-            预约此座位（Phase 3）
+            提交预约
           </el-button>
         </div>
       </template>
