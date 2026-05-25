@@ -61,7 +61,6 @@
 | `/user/queue/notifications` | 服务端→指定用户 | `NotificationPayload { id, type, title, content, relatedId, createdAt }` |
 
 > 后端推送统一走 `com.csh.modules.notification.service.WsPushService` 与 `NotificationService`，参见 docs/AGENTS.md §3。
-> Phase 2 临时使用 `SimpMessagingTemplate` 直接广播 `/topic/rooms/{roomId}/seats`；等 A 完成 `WsPushService` 后由 B 替换为 `wsPushService.publishSeat(...)`。
 
 ---
 
