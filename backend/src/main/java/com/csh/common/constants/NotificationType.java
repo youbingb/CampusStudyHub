@@ -1,0 +1,13 @@
+package com.csh.common.constants;
+
+public enum NotificationType {
+    RESERVATION_CREATED,
+    RESERVATION_CANCELLED,
+    RESERVATION_EXPIRED,
+    RESERVATION_REMINDER,
+    REPORT_FILED,
+    REPORT_RESOLVED,
+    CREDIT_CHANGED,
+    ANNOUNCEMENT,
+    SYSTEM
+}
