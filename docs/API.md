@@ -251,6 +251,34 @@
 
 ---
 
+## Phase 4 - 智能推荐（Agent B）
+
+### GET /api/recommend
+**功能**：基于 5 因子加权公式（room-pref / feature-pref / neighbor-free / same-seat / conflict，权重在 `application.yml#csh.recommend.weight` 配置）返回 Top-N 座位推荐
+**鉴权**：登录用户
+**Query**：`RecommendQuery`
+- `startTime` *datetime, required*
+- `endTime` *datetime, required*
+- `roomId` *long, optional - 限定房间*
+- `topN` *int, optional, 默认走 `csh.recommend.default-top-n` (=5)*
+
+**算法**：
+1. 候选 = 非 FAULT 座位 ∩ 房间 status=1 ∩ 时段无硬冲突
+2. 用户历史 = BOOKED/CHECKED_IN/COMPLETED 的预约，按房间/特性词频累计 + 收集曾用座位
+3. 每个候选打 5 因子分（0~1），加权求总分；理由词命中后追加到 `reasons` 数组
+4. 按总分降序取 top-N
+
+**响应**：`R<List<RecommendVo>>`
+```
+{
+  seatId, seatNo, rowNo, colNo, feature, roomId, roomName,
+  score, roomPrefScore, featurePrefScore, neighborFreeScore,
+  sameSeatScore, conflictScore, reasons: ["常去 主楼101", "邻座清净", ...]
+}
+```
+
+---
+
 ## Phase 5 - 站内通知 + 用户管理（Agent A）
 
 ### 通知类型枚举
