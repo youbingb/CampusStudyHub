@@ -9,7 +9,7 @@
 
 ## 总体状态
 
-**Phase 0（工程脚手架）已完成 —— 后端 + 前端 + 文档全部就绪。Phase 1 鉴权由 Agent A 完成；Phase 2 房间/座位（前后端）由 Agent B 完成。**
+**Phase 0（工程脚手架）已完成 —— 后端 + 前端 + 文档全部就绪。Phase 1 鉴权由 Agent A 完成；Phase 2/3 房间/座位/预约由 Agent B 完成；Phase 5/6/7/8 由 Agent C 完成。**
 
 | Phase | 内容 | 状态 |
 |---|---|---|
@@ -19,9 +19,9 @@
 | 3 | 预约 + 签到 + 定时任务（超时释放） | 🟢 完成（Agent B） |
 | 4 | 智能推荐（规则打分） | ⚪ 未开始（Agent B） |
 | 5 | 违规举报 + 站内通知 | 🟢 完成（A 通知 + C 举报） |
-| 6 | 巡检 + 公告 + 预约规则管理 | ⚪ 未开始（Agent C） |
-| 7 | 数据统计 + EasyExcel 导出 | ⚪ 未开始（Agent C） |
-| 8 | 操作日志（AOP 切面） | ⚪ 未开始（Agent C） |
+| 6 | 巡检 + 公告 + 预约规则管理 | 🟢 完成（Agent C） |
+| 7 | 数据统计 + EasyExcel 导出 | 🟢 完成（Agent C） |
+| 8 | 操作日志（AOP 切面） | 🟢 完成（Agent C） |
 | 9 | 收尾：Knife4j 文档 + README + ER 图 | 🟢 完成（Agent A） |
 
 ---
@@ -58,6 +58,10 @@ a35093c 添加 MyBatis-Plus 分页 / Knife4j / WebSocket(STOMP) 配置
 - **Phase 9 收尾**：`Knife4jGroupConfig` 把接口按 7 个业务组分组（/doc.html 顶部下拉切换）；根 `README.md` 写完整启动说明 + 截图坑位 + agent 分工总览；`docs/ER.md` 用 mermaid 画完整 12 表 ER 图 + 索引表 + 软删表 + 状态枚举速查
 - **Phase 3 预约/签到后端（reservation 模块）**：`ReservationController`（学生创建/查询/取消/签到/签退）、`AdminReservationController`（管理端分页/详情/强制取消）、`ReservationService`（信誉门槛 + 时段冲突 + 每日上限 + 最长时长 + 最早签到时间校验，状态变更同步调 `SeatStatusService.refresh` 与 `NotificationService.send`）、`scheduler/ReservationScheduler`（每 30s 跑超时未签到 → EXPIRED + 扣 `no_show_credit_penalty` + 通知；已签到到期 → COMPLETED）
 - **Phase 3 预约前端**：`api/reservation.ts`；`student/SeatMap` 新增预约 Drawer 内表单（datetime 选择 + 提交后跳到我的预约）；`student/MyReservations`（进行中/历史/全部 Tab + 签到/签退/取消）；`admin/Reservations`（多条件分页 + 强制取消带原因输入）
+- **Phase 5 举报（report 模块）**：`CreditService`（C own 的跨模块契约，writeback credit_log + 改 sys_user.credit_score + 通过 NotificationService 发 CREDIT_CHANGED）；学生 `ReportController`（/api/reports：提交/我的列表/详情/撤销 PENDING），管理 `AdminReportController`（/api/admin/reports：分页筛选 + 审核 dialog 走 APPROVE/REJECT 触发 CreditService）；前端 `api/report.ts`、`student/Reports`（提交 + 我的）、`admin/Reports`（处理）
+- **Phase 6 巡检/公告/规则（inspection + system 模块）**：`AdminInspectionController` + `InspectionService`（巡检新增同步对 issues 中每个 seatId 调 `SeatStatusService.markFault`）；学生 `AnnouncementController`（/api/announcements + /active 顶部轮播）+ 管理 `AdminAnnouncementController`（CRUD + publish/unpublish）；`RuleController`（学生 GET /api/rules/current）+ `AdminRuleController`（管理 PUT 6 字段）；前端 `api/inspection.ts/announcement.ts/rule.ts` + `admin/Inspections`/`admin/Announcements`/`admin/Rules`
+- **Phase 7 数据统计（statistics 模块）**：`AdminStatsController` 5 个 GET（occupancy 上座 / usage 用户 TopN / popular-hours 热门时段 / violations 违规 TopN / faults 故障汇总）+ /export 导出 5 sheet xlsx；复杂 SQL 走 `resources/mapper/StatisticsMapper.xml`；EasyExcel 走 VO 上的 `@ExcelProperty` 注解；前端 `api/stats.ts` + `components/charts/{Occupancy,Usage,PopularHours,Violation,Fault}Chart.vue` + `admin/Stats`（4 个 KPI + 5 张 ECharts + fetch+blob 下载）
+- **Phase 8 操作日志（aop + system 模块）**：`aop/OperationLog` 注解 + `aop/OperationLogAspect`（@AfterReturning 落库，捕获用户/IP/UA，SpEL 抓 targetId）；自有 5 个 admin Controller 写操作均已贴注解；`AdminLogController` 查询 + 前端 `api/log.ts` + `admin/Logs` 多维过滤页
 
 ### 已就绪的种子账号（默认密码均为 `123456`）
 
@@ -75,9 +79,9 @@ a35093c 添加 MyBatis-Plus 分页 / Knife4j / WebSocket(STOMP) 配置
 
 ## 当前能做什么
 
-后端**可以编译并跑通鉴权、房间座位、举报、信誉、通知、用户管理**（102+ 源文件），前端**可以走完登录 → 浏览房间 → 看座位实时状态 → 收消息 → 编辑资料 → 改密码 → 管理端管用户**。
+后端**可以编译并跑通**鉴权、房间座位、预约/签到、举报、信誉、通知、用户管理、巡检、公告、规则、统计、操作日志（123+ 源文件），前端**可以走完登录 → 浏览房间 → 选座位 → 预约/签到 → 提交举报 → 收消息 → 编辑资料 → 改密码 → 管理端 (用户/房间/座位/预约/举报/巡检/公告/规则/统计/日志)**。
 
-业务剩余主要是 Phase 3 预约/签到、Phase 4 推荐、Phase 6 巡检/公告/规则、Phase 7 统计、Phase 8 操作日志。
+业务剩余主要是 Phase 4 智能推荐。
 
 ### 准备运行环境（一次性）
 ```bash
@@ -115,8 +119,8 @@ npm run dev            # → http://localhost:5173
 Phase 1 已完成，Phase 2 房间座位（前后端）已完成。跨模块的 `NotificationService` / `WsPushService` / `CreditService` 都已落地。后续按 [`docs/AGENTS.md`](./AGENTS.md) 分工继续推进：
 
 1. **Agent A**（地基组）：✅ 全部完成（Phase 0/1/5A/9）
-2. **Agent B**（核心业务组）：Phase 3 预约/签到（调 `NotificationService.send` + `CreditService.getScore/changeCredit`，所有依赖均已可用）；Phase 4 智能推荐
-3. **Agent C**（管理后台 + 数据组）：Phase 5 举报+信誉已完成；继续 Phase 6 巡检/公告/规则，Phase 7 数据统计，Phase 8 操作日志
+2. **Agent B**（核心业务组）：Phase 2/3 已完成；剩 Phase 4 智能推荐
+3. **Agent C**（管理后台 + 数据组）：✅ 全部完成（Phase 5/6/7/8）
 
 每个 agent 接手只需把对应模块下"占位 view"的内容替换成真实页面（页面顶部都已注明谁负责）。
 

@@ -328,3 +328,207 @@ STOMP CONNECT 帧需在 native header 中带 `Authorization: Bearer <jwt>`。
 `WebSocketAuthConfig` 解析 JWT 后把 `sub`（用户 ID）设为会话 Principal.name，使
 `SimpMessagingTemplate.convertAndSendToUser(userId, "/queue/notifications", payload)` 能正确路由。
 前端 `utils/ws.ts` 已在 `connectHeaders` 里带 token；订阅 `/user/queue/notifications` 即可收到个人推送。
+
+---
+
+## Phase 5 - 违规举报（Agent C）
+
+> 状态枚举 `ReportStatus = PENDING | PROCESSING | RESOLVED | REJECTED`。
+> 学生路径 `/api/reports`；管理路径 `/api/admin/reports`。
+> 处理时如带 `creditDelta != 0` 且 `targetUserId` 存在，会调 `CreditService.changeCredit` 写 credit_log + 发 CREDIT_CHANGED 通知。
+
+### POST /api/reports
+**功能**：学生提交举报
+**鉴权**：登录用户
+**请求**：`CreateReportReq`
+- `type` *string, required, 占座/喧哗/设施损坏/其他*
+- `description` *string, required, ≤500*
+- `targetUserId` *long, optional*
+- `reservationId` *long, optional*
+- `seatId` *long, optional*
+- `evidenceUrl` *string, optional*
+
+**响应**：`R<Long>` 举报 id
+**错误码**：400 不能举报自己 / 参数校验失败
+
+### GET /api/reports/mine
+**功能**：当前用户的举报分页
+**鉴权**：登录用户
+**Query**：`ReportQuery { status?, type?, keyword?, page, size }`
+**响应**：`R<PageResult<ReportVo>>`，`ReportVo { id, type, description, evidenceUrl, status, result, reporterId, reporterName, targetUserId, targetUserName, reservationId, seatId, handlerId, handlerName, handledAt, createdAt }`
+
+### GET /api/reports/{id}
+**功能**：举报详情（仅本人）
+**鉴权**：登录用户
+**响应**：`R<ReportVo>`
+**错误码**：403 无权查看他人举报
+
+### DELETE /api/reports/{id}
+**功能**：撤销 PENDING 的举报（软删）
+**鉴权**：登录用户
+**响应**：`R<Void>`
+**错误码**：403 无权撤销他人举报 / 400 仅待处理可撤销
+
+---
+
+### GET /api/admin/reports
+**功能**：管理端分页 + 多条件筛选
+**鉴权**：ADMIN
+**Query**：`ReportQuery { status?, type?, keyword?, reporterId?, targetUserId?, page, size }`
+**响应**：`R<PageResult<ReportVo>>`
+
+### GET /api/admin/reports/{id}
+**功能**：举报详情
+**鉴权**：ADMIN
+**响应**：`R<ReportVo>`
+
+### POST /api/admin/reports/{id}/process
+**功能**：处理举报（核实通过 / 驳回）
+**鉴权**：ADMIN
+**请求**：`ProcessReportReq`
+- `action` *APPROVE | REJECT*
+- `result` *string, optional, ≤500*
+- `creditDelta` *int, -50~50, 仅 APPROVE 且 targetUserId 存在时生效*
+- `creditReason` *string, optional*
+
+**响应**：`R<Void>`，落 `operation_log`（@OperationLog "举报/处理"）
+
+---
+
+## Phase 6 - 巡检 / 公告 / 规则（Agent C）
+
+### GET /api/admin/inspections
+**功能**：管理端巡检记录分页
+**鉴权**：ADMIN
+**Query**：`InspectionQuery { roomId?, inspectorId?, from?, to?, page, size }`
+**响应**：`R<PageResult<InspectionVo>>`，`InspectionVo { id, roomId, roomName, inspectorId, inspectorName, content, issues:[seatId], createdAt }`
+
+### GET /api/admin/inspections/{id}
+**鉴权**：ADMIN
+**响应**：`R<InspectionVo>`
+
+### POST /api/admin/inspections
+**功能**：新增巡检（issues 中的每个 seatId 会被调 `SeatStatusService.markFault`）
+**鉴权**：ADMIN
+**请求**：`CreateInspectionReq { roomId, content?, issues?:[seatId] }`
+**响应**：`R<Long>` 巡检 id；落 `operation_log`（@OperationLog "巡检/新增"）
+
+### DELETE /api/admin/inspections/{id}
+**鉴权**：ADMIN
+**响应**：`R<Void>`；落 `operation_log`
+
+---
+
+### GET /api/announcements
+**功能**：学生端已发布公告分页
+**鉴权**：登录用户
+**Query**：`AnnouncementQuery { keyword?, page, size }`
+**响应**：`R<PageResult<AnnouncementVo>>`，`AnnouncementVo { id, title, content, publisherId, publisherName, status, publishedAt, createdAt, updatedAt }`
+
+### GET /api/announcements/{id}
+**功能**：公告详情（仅已发布）
+**鉴权**：登录用户
+**响应**：`R<AnnouncementVo>`
+
+### GET /api/announcements/active?limit=5
+**功能**：当前生效公告 top N，用于首页/Layout 轮播
+**鉴权**：登录用户
+**响应**：`R<List<AnnouncementVo>>`
+
+---
+
+### GET /api/admin/announcements
+**功能**：管理端公告列表（含草稿）
+**鉴权**：ADMIN
+**Query**：`AnnouncementQuery { keyword?, status?, page, size }`
+**响应**：`R<PageResult<AnnouncementVo>>`
+
+### GET /api/admin/announcements/{id}
+**鉴权**：ADMIN
+**响应**：`R<AnnouncementVo>`
+
+### POST /api/admin/announcements
+**功能**：新增公告（publishNow=true 立即发布，false 存草稿）
+**鉴权**：ADMIN
+**请求**：`CreateAnnouncementReq { title, content, publishNow? }`
+**响应**：`R<Long>`；落 `operation_log`
+
+### PUT /api/admin/announcements/{id}
+**功能**：更新公告（仅传入字段被改）
+**请求**：`UpdateAnnouncementReq { title?, content? }`
+**响应**：`R<Void>`；落 `operation_log`
+
+### POST /api/admin/announcements/{id}/publish
+**功能**：发布草稿（status=1, published_at=now if first publish）
+**响应**：`R<Void>`；落 `operation_log`
+
+### POST /api/admin/announcements/{id}/unpublish
+**响应**：`R<Void>`；落 `operation_log`
+
+### DELETE /api/admin/announcements/{id}
+**响应**：`R<Void>`；落 `operation_log`
+
+---
+
+### GET /api/rules/current
+**功能**：学生读取当前预约规则（用于客户端校验提示）
+**鉴权**：登录用户
+**响应**：`R<RuleVo>`，`RuleVo { id, maxDaily, maxAdvanceDays, minCredit, checkInGraceMin, maxDurationHours, noShowCreditPenalty, updatedAt }`
+
+### GET /api/admin/rules
+**鉴权**：ADMIN
+**响应**：`R<RuleVo>`
+
+### PUT /api/admin/rules
+**功能**：更新预约规则（6 字段全部 optional，仅传入项被改）
+**鉴权**：ADMIN
+**请求**：`UpdateRuleReq`
+- `maxDaily` *1~20*
+- `maxAdvanceDays` *0~30*
+- `minCredit` *0~100*
+- `checkInGraceMin` *0~120*
+- `maxDurationHours` *1~12*
+- `noShowCreditPenalty` *0~50*
+
+**响应**：`R<RuleVo>` 最新值；落 `operation_log`
+
+---
+
+## Phase 7 - 数据统计（Agent C）
+
+> 通用 Query：`StatsQuery { from?(yyyy-MM-dd), to?(yyyy-MM-dd), topN?(默认 10) }`；时间窗口闭开区间，`to` 实际转换为次日 00:00。
+
+### GET /api/admin/stats/occupancy
+**响应**：`R<List<OccupancyVo>>`，`OccupancyVo { roomId, roomName, capacity, totalReservations, completedReservations, totalSeatHours }`
+
+### GET /api/admin/stats/usage
+**响应**：`R<List<UsageVo>>`，`UsageVo { userId, username, realName, studentNo, reservationCount, completedCount, noShowCount, totalHours }`
+
+### GET /api/admin/stats/popular-hours
+**响应**：`R<List<PopularHourVo>>`，`PopularHourVo { hour: 0-23, reservationCount }`
+
+### GET /api/admin/stats/violations
+**响应**：`R<List<ViolationVo>>`，`ViolationVo { userId, username, realName, studentNo, creditScore, violationCount, totalDeduction }`
+
+### GET /api/admin/stats/faults
+**响应**：`R<List<FaultVo>>`，`FaultVo { roomId, roomName, totalFaults, openFaults, latestFaultAt }`
+
+### GET /api/admin/stats/export
+**功能**：导出 5 项统计的 xlsx 文件，5 个 Sheet
+**鉴权**：ADMIN
+**响应**：`application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`，落 `operation_log`（@OperationLog "统计/导出 Excel"）
+
+---
+
+## Phase 8 - 操作日志（Agent C）
+
+> AOP 切面 `OperationLogAspect` 在所有打了 `@OperationLog` 的 controller 方法 @AfterReturning 时写 `operation_log`。
+> 注解定义：`@OperationLog(module, action, targetIdSpEL?)`，targetId 通过 SpEL 从方法参数 `#id` 或返回值 `#result?.data` 解析。
+> 当前自动落表的操作：Agent C 自己的 5 个 admin controller 的写接口（举报处理、巡检新增/删除、公告 CRUD+发布/下架、规则更新、统计导出）。
+
+### GET /api/admin/logs
+**功能**：操作日志分页查询
+**鉴权**：ADMIN
+**Query**：`OperationLogQuery { module?, action?, username?, userId?, from?, to?, page=1, size=20 }`
+**响应**：`R<PageResult<OperationLogVo>>`，`OperationLogVo { id, userId, username, module, action, targetId, ip, ua, createdAt }`
+
