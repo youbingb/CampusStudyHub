@@ -49,12 +49,19 @@ public class SeatStatusServiceImpl implements SeatStatusService {
             // 2. 当前时间是否在某条 CHECKED_IN 时段内 → OCCUPIED
             // 3. 当前时间是否在某条 BOOKED 时段内 → RESERVED
             // 4. 都不是 → AVAILABLE
+            // 注意：CHECKED_IN 不要求 startTime<=now，因为用户可能在宽限期内提前签到
             LocalDateTime now = LocalDateTime.now();
             List<Reservation> active = reservationMapper.selectList(new LambdaQueryWrapper<Reservation>()
                     .eq(Reservation::getSeatId, seatId)
                     .in(Reservation::getStatus, ReservationStatus.BOOKED, ReservationStatus.CHECKED_IN)
-                    .le(Reservation::getStartTime, now)
-                    .ge(Reservation::getEndTime, now));
+                    .and(w -> w
+                            .and(inner -> inner
+                                    .eq(Reservation::getStatus, ReservationStatus.CHECKED_IN)
+                                    .ge(Reservation::getEndTime, now))
+                            .or(inner -> inner
+                                    .eq(Reservation::getStatus, ReservationStatus.BOOKED)
+                                    .le(Reservation::getStartTime, now)
+                                    .ge(Reservation::getEndTime, now))));
             if (active.stream().anyMatch(r -> r.getStatus() == ReservationStatus.CHECKED_IN)) {
                 computed = SeatStatus.OCCUPIED;
             } else if (!active.isEmpty()) {

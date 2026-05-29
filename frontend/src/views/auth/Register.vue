@@ -42,7 +42,13 @@ async function submit() {
 <template>
   <div class="register-page">
     <div class="card">
-      <h2 class="title">📚 注册学生账号</h2>
+      <div class="brand-row">
+        <span class="brand-mark">书</span>
+        <div class="brand-text">
+          <div class="brand-title">注册账号</div>
+          <div class="brand-sub">学生注册</div>
+        </div>
+      </div>
       <el-form ref="formRef" :model="form" :rules="rules" label-position="top">
         <el-form-item label="用户名" prop="username"><el-input v-model="form.username" /></el-form-item>
         <el-form-item label="密码" prop="password"><el-input v-model="form.password" type="password" show-password /></el-form-item>
@@ -63,16 +69,52 @@ async function submit() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f5f7fa;
+  background: var(--paper-bg);
+  background-image:
+    radial-gradient(circle at 18% 22%, rgba(90, 122, 82, 0.06), transparent 40%),
+    radial-gradient(circle at 82% 78%, rgba(176, 74, 58, 0.04), transparent 45%);
+  padding: 24px 0;
 }
 .card {
   width: 420px;
-  padding: 28px 32px;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  padding: 32px 36px;
+  background: var(--paper-card);
+  border: 1px solid var(--paper-border);
+  border-radius: var(--radius-2);
+  box-shadow: var(--shadow-2);
 }
-.title { text-align: center; margin: 0 0 16px; }
-.footer { text-align: center; margin-top: 12px; font-size: 13px; color: #606266; }
-.footer a { color: var(--el-color-primary); }
+.brand-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+.brand-mark {
+  width: 38px;
+  height: 38px;
+  border-radius: 6px;
+  background: var(--accent);
+  color: #fdfbf3;
+  font-family: var(--font-serif);
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.brand-text { line-height: 1.2; text-align: left; }
+.brand-title {
+  font-family: var(--font-serif);
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--ink-1);
+}
+.brand-sub {
+  font-size: 11px;
+  color: var(--ink-3);
+  letter-spacing: 0.1em;
+  margin-top: 2px;
+}
+.footer { text-align: center; margin-top: 14px; font-size: 13px; color: var(--ink-2); }
+.footer a { color: var(--accent); }
 </style>

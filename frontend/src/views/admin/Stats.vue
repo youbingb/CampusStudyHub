@@ -133,7 +133,12 @@ onMounted(refresh)
       </el-col>
     </el-row>
 
-    <el-row :gutter="12" v-loading="loading">
+    <el-empty
+      v-if="!loading && !occupancy.length && !usage.length && !popularHours.length && !violations.length && !faults.length"
+      description="暂无统计数据"
+    />
+
+    <el-row v-else :gutter="12" v-loading="loading">
       <el-col :span="12">
         <el-card shadow="never" class="chart-card">
           <template #header><span>各自习室上座情况</span></template>

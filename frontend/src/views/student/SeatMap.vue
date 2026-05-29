@@ -117,6 +117,26 @@ function statusLabel(s: SeatStatus): string {
   return { AVAILABLE: '空闲', RESERVED: '已预约', OCCUPIED: '使用中', FAULT: '故障' }[s]
 }
 
+const FEATURE_MAP: Record<string, string> = {
+  window: '靠窗',
+  socket: '有插座',
+  quiet: '安静区',
+  near_door: '靠门',
+  near_ac: '靠空调',
+  computer: '有电脑',
+  power: '有电源',
+  network: '有网口'
+}
+
+function parseFeatures(raw?: string): string[] {
+  if (!raw) return []
+  try {
+    const arr = JSON.parse(raw)
+    if (Array.isArray(arr)) return arr.map((f: string) => FEATURE_MAP[f] || f)
+  } catch {}
+  return [raw]
+}
+
 async function submitReserve() {
   if (!selectedSeat.value) return
   if (!reserveForm.value.startTime || !reserveForm.value.endTime) {
@@ -136,7 +156,8 @@ async function submitReserve() {
     })
     ElMessage.success('预约成功')
     drawerVisible.value = false
-    router.push('/student/reservations')
+    selectedSeat.value = null
+    await loadAll()
   } catch {
     // 拦截器已 toast
   } finally {
@@ -184,7 +205,7 @@ onUnmounted(() => {
             :key="ri + '-' + ci"
             class="seat"
             :class="s ? s.status : 'EMPTY'"
-            :disabled="!s || s.status === 'FAULT'"
+            :disabled="!s || s.status === 'FAULT' || s.status === 'OCCUPIED' || s.status === 'RESERVED'"
             @click="openSeat(s)"
           >
             {{ s ? s.seatNo.replace(/^[A-Za-z]+/, '') : '' }}
@@ -205,7 +226,9 @@ onUnmounted(() => {
               {{ statusLabel(selectedSeat.status) }}
             </el-tag>
           </el-descriptions-item>
-          <el-descriptions-item v-if="selectedSeat.feature" label="特性">{{ selectedSeat.feature }}</el-descriptions-item>
+          <el-descriptions-item v-if="selectedSeat.feature" label="特性">
+            <el-tag v-for="f in parseFeatures(selectedSeat.feature)" :key="f" size="small" class="feature-tag">{{ f }}</el-tag>
+          </el-descriptions-item>
         </el-descriptions>
 
         <el-divider />
@@ -284,4 +307,5 @@ export default { components: { ArrowLeft, Location, Clock } }
 .seat:hover:not(:disabled) { filter: brightness(1.08); transform: scale(1.04); transition: transform 0.1s; }
 
 .drawer-footer { margin-top: 16px; text-align: right; }
+.feature-tag { margin-right: 4px; }
 </style>

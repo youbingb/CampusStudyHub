@@ -93,8 +93,12 @@ watch(
 
 onMounted(async () => {
   await store.ensureSubscribed()
-  await store.refreshUnread()
   await load()
+  // 若全部消息列表为空，则强制归零未读数，避免侧栏 badge 与实际列表不一致
+  if (query.value.readFlag === undefined && !query.value.type && total.value === 0) {
+    store.unreadCount = 0
+  }
+  await store.refreshUnread()
 })
 </script>
 
@@ -124,8 +128,7 @@ onMounted(async () => {
 
       <el-button
         type="primary"
-        plain
-        :disabled="store.unreadCount === 0"
+        :disabled="!store.unreadCount"
         style="margin-left: auto"
         @click="markAll"
       >
@@ -180,7 +183,7 @@ onMounted(async () => {
   transition: background 0.15s;
 }
 .item:hover { background: #f5f7fa; }
-.item.unread { background: linear-gradient(to right, #ecf5ff 0%, #fff 100%); }
+.item.unread { background: var(--accent-soft); }
 .item.unread .title { font-weight: 600; }
 .item-head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
 .item-head .title { flex: 1; font-size: 14px; }

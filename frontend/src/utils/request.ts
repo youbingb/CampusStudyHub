@@ -9,7 +9,8 @@ export interface ApiResult<T = unknown> {
 
 const request = axios.create({
   baseURL: '/api',
-  timeout: 15000
+  timeout: 15000,
+  headers: { 'Content-Type': 'application/json; charset=utf-8' }
 })
 
 request.interceptors.request.use((config: InternalAxiosRequestConfig) => {
@@ -36,11 +37,12 @@ request.interceptors.response.use(
     const status = err.response?.status
     const msg = err.response?.data?.message || err.message
     if (status === 401) {
-      ElMessage.error('未登录或登录已过期')
+      ElMessage.error(msg || '未登录或登录已过期')
       localStorage.removeItem('csh-token')
-      // 路由跳转交给守卫处理，这里不直接 push 避免循环依赖
       if (location.pathname !== '/auth/login') {
-        location.href = '/auth/login'
+        import('@/router').then(({ default: router }) => {
+          router.push('/auth/login')
+        })
       }
     } else if (status === 403) {
       ElMessage.error('无权限访问')

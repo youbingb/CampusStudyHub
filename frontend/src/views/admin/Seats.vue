@@ -51,6 +51,26 @@ const STATUS_OPTIONS: { value: SeatStatus; label: string }[] = [
   { value: 'FAULT', label: '故障' }
 ]
 
+const FEATURE_MAP: Record<string, string> = {
+  window: '靠窗',
+  socket: '有插座',
+  quiet: '安静区',
+  near_door: '靠门',
+  near_ac: '靠空调',
+  computer: '有电脑',
+  power: '有电源',
+  network: '有网口'
+}
+
+function parseFeatures(raw?: string): string[] {
+  if (!raw) return []
+  try {
+    const arr = JSON.parse(raw)
+    if (Array.isArray(arr)) return arr.map((f: string) => FEATURE_MAP[f] || f)
+  } catch {}
+  return [raw]
+}
+
 function statusTag(s: SeatStatus): { type: 'success' | 'warning' | 'info' | 'danger'; label: string } {
   switch (s) {
     case 'AVAILABLE': return { type: 'success', label: '空闲' }
@@ -233,7 +253,12 @@ onMounted(async () => {
           <el-tag :type="statusTag(row.status).type">{{ statusTag(row.status).label }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="feature" label="特性" min-width="120" show-overflow-tooltip />
+      <el-table-column label="特性" min-width="200">
+        <template #default="{ row }">
+          <el-tag v-for="f in parseFeatures(row.feature)" :key="f" size="small" style="margin-right: 4px">{{ f }}</el-tag>
+          <span v-if="!row.feature" style="color: #c0c4cc">—</span>
+        </template>
+      </el-table-column>
       <el-table-column label="操作" width="320" fixed="right">
         <template #default="{ row }">
           <el-button size="small" link type="primary" @click="openEdit(row)">编辑</el-button>

@@ -1,14 +1,79 @@
+/* 暖色纸质学院风 —— 全局主题 */
+
+:root {
+  /* 中性色：纸感暖色系 */
+  --paper-bg: #faf7f2;          /* 主背景：宣纸米色 */
+  --paper-sidebar: #f3ecdc;     /* 侧栏：稍深米色 */
+  --paper-card: #fffdf7;        /* 卡片：偏白米色 */
+  --paper-border: #e6dccb;      /* 边框：浅棕米 */
+  --paper-border-strong: #d4c6a8;
+  --ink-1: #3d2e1f;             /* 主文字：墨棕 */
+  --ink-2: #6b5a48;             /* 次文字 */
+  --ink-3: #9a8a78;             /* 辅助/弱化 */
+
+  /* 主色：墨绿 */
+  --accent: #5a7a52;
+  --accent-hover: #6b8d62;
+  --accent-active: #486340;
+  --accent-soft: #e8efe3;       /* 浅色背景态 */
+
+  /* 强调辅助：朱砂红（用于警告/危险/印章感） */
+  --vermilion: #b04a3a;
+
+  /* 阴影：极柔和，模拟纸张投影 */
+  --shadow-1: 0 1px 2px rgba(61, 46, 31, 0.04), 0 2px 6px rgba(61, 46, 31, 0.04);
+  --shadow-2: 0 2px 4px rgba(61, 46, 31, 0.05), 0 8px 24px rgba(61, 46, 31, 0.06);
+
+  --radius-1: 4px;
+  --radius-2: 8px;
+
+  /* 字体 */
+  --font-sans: -apple-system, BlinkMacSystemFont, 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial,
+    sans-serif;
+  --font-serif: 'Source Han Serif SC', 'Noto Serif SC', 'Songti SC',
+    'STSong', 'SimSun', Georgia, 'Times New Roman', serif;
+}
+
+/* Element Plus 主色覆盖（在 element-plus/index.css 之后加载即可生效） */
+:root {
+  --el-color-primary: var(--accent);
+  --el-color-primary-light-3: #7d9974;
+  --el-color-primary-light-5: #9eb398;
+  --el-color-primary-light-7: #c2d0bd;
+  --el-color-primary-light-8: #d6dfd2;
+  --el-color-primary-light-9: var(--accent-soft);
+  --el-color-primary-dark-2: var(--accent-active);
+
+  --el-color-danger: var(--vermilion);
+  --el-color-danger-light-3: #c46e60;
+  --el-color-danger-light-5: #d29286;
+  --el-color-danger-light-7: #e1b6ad;
+  --el-color-danger-light-9: #f5e6e3;
+
+  --el-text-color-primary: var(--ink-1);
+  --el-text-color-regular: var(--ink-2);
+  --el-text-color-secondary: var(--ink-3);
+
+  --el-border-color: var(--paper-border);
+  --el-border-color-light: var(--paper-border);
+  --el-border-color-lighter: #ede4d2;
+
+  --el-bg-color: var(--paper-card);
+  --el-bg-color-page: var(--paper-bg);
+  --el-fill-color-blank: var(--paper-card);
+  --el-fill-color-light: #f6f0e1;
+}
+
 html,
 body,
 #app {
   margin: 0;
   padding: 0;
   height: 100%;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
-    'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial,
-    sans-serif;
-  color: #303133;
-  background: #f5f7fa;
+  font-family: var(--font-sans);
+  color: var(--ink-1);
+  background: var(--paper-bg);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -21,21 +86,80 @@ a {
   color: inherit;
 }
 
+h1, h2, h3, h4 {
+  font-family: var(--font-serif);
+  color: var(--ink-1);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* 页面通用容器 */
 .page {
-  padding: 16px;
+  padding: 24px 28px;
+  max-width: 1240px;
 }
 
 .page-title {
-  font-size: 18px;
+  font-family: var(--font-serif);
+  font-size: 22px;
   font-weight: 600;
-  margin: 0 0 16px;
+  margin: 0 0 20px;
+  color: var(--ink-1);
+  position: relative;
+  padding-left: 14px;
+}
+.page-title::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 3px;
+  background: var(--accent);
+  border-radius: 2px;
+}
+
+/* 卡片：纸感，弱阴影，细边 */
+.paper-card,
+.placeholder-card {
+  background: var(--paper-card);
+  border: 1px solid var(--paper-border);
+  border-radius: var(--radius-2);
+  padding: 20px 24px;
+  box-shadow: var(--shadow-1);
 }
 
 .placeholder-card {
-  background: #fff;
-  border-radius: 8px;
-  padding: 24px;
-  color: #909399;
+  color: var(--ink-3);
   text-align: center;
-  border: 1px dashed #dcdfe6;
+  font-size: 13px;
+}
+
+/* Element Plus 微调：卡片去蓝色边、按钮去渐变（保留纯色） */
+.el-card {
+  border-color: var(--paper-border) !important;
+  background: var(--paper-card);
+  box-shadow: var(--shadow-1) !important;
+  border-radius: var(--radius-2) !important;
+}
+.el-card__header {
+  border-bottom-color: var(--paper-border);
+  font-family: var(--font-serif);
+}
+
+.el-button--primary {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.el-button--primary:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+.el-button--primary:active {
+  background: var(--accent-active);
+  border-color: var(--accent-active);
+}
+
+.el-tag {
+  border-radius: 3px;
 }

@@ -29,8 +29,8 @@ async function submit() {
     const redirect = (route.query.redirect as string) ||
       (resp.user.role === 'ADMIN' ? '/admin/dashboard' : '/student/home')
     router.replace(redirect)
-  } catch {
-    // request 拦截器已经提示了错误
+  } catch (e: any) {
+    ElMessage.error(e?.message || '用户名或密码错误')
   } finally {
     loading.value = false
   }
@@ -40,8 +40,14 @@ async function submit() {
 <template>
   <div class="login-page">
     <div class="login-card">
-      <h1 class="brand">📚 校园自习室</h1>
-      <p class="hint">学生 / 管理员统一登录入口</p>
+      <div class="brand-row">
+        <span class="brand-mark">书</span>
+        <div class="brand-text">
+          <div class="brand-title">校园自习室</div>
+          <div class="brand-sub">Study Hub</div>
+        </div>
+      </div>
+      <p class="hint">学生与管理员统一登录入口</p>
 
       <el-form ref="formRef" :model="form" :rules="rules" @submit.prevent="submit">
         <el-form-item prop="username">
@@ -58,11 +64,6 @@ async function submit() {
       <div class="footer">
         还没有账号？<RouterLink to="/auth/register">立即注册</RouterLink>
       </div>
-
-      <div class="dev-tip">
-        <strong>测试账号</strong>：admin / stu01～stu05，密码均 <code>123456</code><br />
-        （登录接口由 Agent A 在 Phase 1 实现，当前调用会 404）
-      </div>
     </div>
   </div>
 </template>
@@ -73,27 +74,62 @@ async function submit() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--paper-bg);
+  background-image:
+    radial-gradient(circle at 18% 22%, rgba(90, 122, 82, 0.06), transparent 40%),
+    radial-gradient(circle at 82% 78%, rgba(176, 74, 58, 0.04), transparent 45%);
 }
 .login-card {
   width: 380px;
-  padding: 36px 32px;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+  padding: 40px 36px 32px;
+  background: var(--paper-card);
+  border: 1px solid var(--paper-border);
+  border-radius: var(--radius-2);
+  box-shadow: var(--shadow-2);
 }
-.brand { margin: 0; font-size: 22px; text-align: center; }
-.hint { color: #909399; font-size: 13px; text-align: center; margin: 6px 0 24px; }
-.footer { text-align: center; margin-top: 16px; font-size: 13px; color: #606266; }
-.footer a { color: var(--el-color-primary); }
-.dev-tip {
-  margin-top: 20px;
-  padding: 10px 12px;
-  background: #f5f7fa;
+.brand-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+.brand-mark {
+  width: 40px;
+  height: 40px;
   border-radius: 6px;
-  font-size: 12px;
-  color: #909399;
-  line-height: 1.6;
+  background: var(--accent);
+  color: #fdfbf3;
+  font-family: var(--font-serif);
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-.dev-tip code { background: #ebeef5; padding: 0 4px; border-radius: 3px; }
+.brand-text { line-height: 1.2; text-align: left; }
+.brand-title {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--ink-1);
+}
+.brand-sub {
+  font-size: 11px;
+  color: var(--ink-3);
+  letter-spacing: 0.12em;
+  margin-top: 2px;
+}
+.hint {
+  color: var(--ink-3);
+  font-size: 13px;
+  text-align: center;
+  margin: 6px 0 24px;
+}
+.footer {
+  text-align: center;
+  margin-top: 18px;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+.footer a { color: var(--accent); }
 </style>

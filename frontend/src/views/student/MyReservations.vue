@@ -50,11 +50,17 @@ async function load() {
       const r = await reservationApi.mine({ page: page.value, size: size.value, status: tab.statuses[0] })
       records.value = r.records
       total.value = r.total
+    } else if (tab.statuses && tab.statuses.length > 1) {
+      // Multi-status: fetch all and filter client-side
+      const r = await reservationApi.mine({ page: 1, size: 1000 })
+      const filtered = r.records.filter((x) => tab.statuses!.includes(x.status))
+      const start = (page.value - 1) * size.value
+      records.value = filtered.slice(start, start + size.value)
+      total.value = filtered.length
     } else {
       const r = await reservationApi.mine({ page: page.value, size: size.value })
-      const list = tab.statuses ? r.records.filter((x) => tab.statuses!.includes(x.status)) : r.records
-      records.value = list
-      total.value = tab.statuses ? list.length : r.total
+      records.value = r.records
+      total.value = r.total
     }
   } finally {
     loading.value = false
@@ -62,6 +68,9 @@ async function load() {
 }
 
 async function doCheckIn(r: ReservationVo) {
+  try {
+    await ElMessageBox.confirm(`确定签到 ${r.roomName} · ${r.seatNo}？`, '提示', { type: 'info' })
+  } catch { return }
   try {
     await reservationApi.checkIn(r.id)
     ElMessage.success('签到成功')

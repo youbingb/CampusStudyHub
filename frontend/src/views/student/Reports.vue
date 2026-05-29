@@ -15,12 +15,12 @@ const activeTab = ref<'submit' | 'mine'>('submit')
 // 提交表单
 const formRef = ref()
 const submitting = ref(false)
-const form = reactive<CreateReportReq>({
+const form = reactive({
   type: '',
   description: '',
-  targetUserId: undefined,
-  reservationId: undefined,
-  seatId: undefined,
+  targetUserText: '',
+  reservationId: undefined as number | undefined,
+  seatId: undefined as number | undefined,
   evidenceUrl: ''
 })
 const rules = {
@@ -35,7 +35,7 @@ async function submit() {
     const payload: CreateReportReq = {
       type: form.type,
       description: form.description,
-      targetUserId: form.targetUserId || undefined,
+      targetUserId: form.targetUserText ? Number(form.targetUserText) || undefined : undefined,
       reservationId: form.reservationId || undefined,
       seatId: form.seatId || undefined,
       evidenceUrl: form.evidenceUrl?.trim() || undefined
@@ -113,28 +113,25 @@ onMounted(loadMine)
               />
             </el-form-item>
             <el-form-item label="被举报人">
-              <el-input-number
-                v-model="form.targetUserId"
-                :min="1"
-                placeholder="用户 ID（可选）"
-                controls-position="right"
+              <el-input
+                v-model="form.targetUserText"
+                placeholder="姓名/学号（可选）"
+                maxlength="50"
               />
-              <span class="hint">若知道对方用户 ID 可填，留空表示匿名场景</span>
+              <span class="hint">若知道对方姓名或学号可填，留空表示匿名场景</span>
             </el-form-item>
             <el-form-item label="预约 ID">
-              <el-input-number
-                v-model="form.reservationId"
-                :min="1"
+              <el-input
+                v-model.number="form.reservationId"
+                type="number"
                 placeholder="可选"
-                controls-position="right"
               />
             </el-form-item>
             <el-form-item label="座位 ID">
-              <el-input-number
-                v-model="form.seatId"
-                :min="1"
+              <el-input
+                v-model.number="form.seatId"
+                type="number"
                 placeholder="可选"
-                controls-position="right"
               />
             </el-form-item>
             <el-form-item label="证据链接">
@@ -152,6 +149,7 @@ onMounted(loadMine)
         <div class="filter">
           <el-select v-model="query.status" placeholder="全部状态" clearable style="width: 160px" @change="loadMine">
             <el-option label="待处理" value="PENDING" />
+            <el-option label="处理中" value="PROCESSING" />
             <el-option label="已核实" value="RESOLVED" />
             <el-option label="已驳回" value="REJECTED" />
           </el-select>
